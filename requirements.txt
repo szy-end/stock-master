@@ -1,0 +1,8 @@
+akshare>=1.12.0
+pandas>=2.0
+scikit-learn>=1.3
+matplotlib>=3.7
+numpy>=1.24
+streamlit>=1.28
+plotly>=5.15
+duckduckgo_search>=5.0
