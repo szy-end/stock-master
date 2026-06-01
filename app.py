@@ -43,12 +43,18 @@ st.markdown("""
 
 /* 背景图 */
 .stApp {
-    background: linear-gradient(rgba(255,255,255,0.85), rgba(255,255,255,0.85)),
-                url("https://raw.githubusercontent.com/szy-end/stock-master/master/bg.jpg");
+    background: url("https://raw.githubusercontent.com/szy-end/stock-master/master/bg.jpg");
     background-size: cover;
     background-position: center;
     background-attachment: fixed;
     background-repeat: no-repeat;
+}
+
+/* 内容区半透明深色底，保证文字可读 */
+div[data-testid="stVerticalBlock"] > div {
+    background: rgba(0,0,0,0.55);
+    border-radius: 8px;
+    padding: 4px 8px;
 }
 
 /* 小屏手机 (&lt;= 640px) */
