@@ -659,8 +659,8 @@ with st.sidebar:
     st.divider()
     st.subheader("智能选股")
     scan_universe = st.selectbox("股票池", ["沪深300", "中证500", "全部A股(5525只)"], index=0)
-    scan_count = st.slider("扫描数量", 10, 500, 50, step=10,
-                           help="越多越慢。500只约需8-10分钟。全部A股会随机抽取指定数量。")
+    scan_count = st.slider("扫描数量", 10, 5000, 50, step=10,
+                           help="越多越慢。500只≈8分钟，5000只≈80分钟。全部A股模式下随机抽取。")
 
     st.divider()
     st.caption("数据来源：东方财富、AKShare")
@@ -1145,6 +1145,8 @@ with tab_smart:
                 codes, names = [], []
 
         if codes:
+            if len(codes) > 300:
+                st.warning(f"即将扫描 {len(codes)} 只股票，预计需要 {len(codes)//60}-{len(codes)//30} 分钟。请耐心等待，不要关闭页面。")
             progress_bar = st.progress(0, text="准备扫描...")
             status_area = st.empty()
             results = []
