@@ -57,6 +57,16 @@ div[data-testid="stVerticalBlock"] > div {
     padding: 4px 8px;
 }
 
+/* 侧边栏透明 */
+[data-testid="stSidebar"] > div:first-child {
+    background: rgba(0,0,0,0.6) !important;
+    backdrop-filter: blur(8px);
+}
+
+[data-testid="stSidebar"] * {
+    color: #e0e0e0 !important;
+}
+
 /* 小屏手机 (&lt;= 640px) */
 @media screen and (max-width: 640px) {
     /* 标题缩小 */
