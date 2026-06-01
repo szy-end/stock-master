@@ -29,8 +29,57 @@ st.set_page_config(
     page_title="施大师带你炒股（亏了别找我）",
     page_icon="📈",
     layout="wide",
-    initial_sidebar_state="expanded",
+    initial_sidebar_state="collapsed",
 )
+
+# 响应式CSS — 手机端自适应
+st.markdown("""
+<style>
+/* 整体容器边距优化 */
+.main .block-container {
+    padding: 1rem 0.5rem !important;
+    max-width: 100% !important;
+}
+
+/* 小屏手机 (&lt;= 640px) */
+@media screen and (max-width: 640px) {
+    /* 标题缩小 */
+    h1 { font-size: 1.4rem !important; }
+    h2 { font-size: 1.1rem !important; }
+    h3 { font-size: 1rem !important; }
+
+    /* 卡片文字缩小 */
+    .prediction-card { padding: 10px !important; }
+    .prediction-card .big-num { font-size: 32px !important; }
+    .prediction-card .label { font-size: 12px !important; }
+
+    /* 表格字体缩小 */
+    .stDataFrame { font-size: 12px !important; }
+
+    /* 指标卡片居中 */
+    [data-testid="stMetric"] {
+        text-align: center !important;
+    }
+}
+
+/* 平板 (641-1024px) */
+@media screen and (min-width: 641px) and (max-width: 1024px) {
+    h1 { font-size: 1.8rem !important; }
+}
+
+/* 防止内容溢出 */
+.stDataFrame, .stTable {
+    overflow-x: auto !important;
+    -webkit-overflow-scrolling: touch;
+}
+
+/* 按钮触摸友好 */
+button, .stButton > button {
+    min-height: 44px !important;
+    min-width: 44px !important;
+}
+</style>
+""", unsafe_allow_html=True)
 
 # ============================================================
 # 缓存函数 —— 避免重复请求数据
@@ -804,7 +853,7 @@ with tab_stock:
                                  opacity=0.5), row=3, col=1)
 
             fig.update_layout(
-                height=700,
+                height=450,
                 margin=dict(l=0, r=0, t=30, b=0),
                 xaxis_rangeslider_visible=False,
                 legend=dict(x=0, y=1.1, orientation="h"),
@@ -869,7 +918,7 @@ with tab_recommend:
                         margin: 10px 0;
                     ">
                         <div style="font-size: 14px; color: #888;">模型预测次日</div>
-                        <div style="font-size: 48px; font-weight: bold; color: {color};">{pred}</div>
+                        <div style="font-size: clamp(28px, 8vw, 48px); font-weight: bold; color: {color};">{pred}</div>
                         <div style="font-size: 16px; color: #666;">
                             看涨概率 {prob:.1%} | 信心度 {abs(prob - 0.5) * 2:.1%}
                         </div>
@@ -934,7 +983,7 @@ with tab_recommend:
                     margin: 10px 0;
                 ">
                     <div style="font-size: 14px; color: #888;">综合建议</div>
-                    <div style="font-size: 42px; font-weight: bold; color: {rec_color};">{recommendation}</div>
+                    <div style="font-size: clamp(24px, 6vw, 42px); font-weight: bold; color: {rec_color};">{recommendation}</div>
                     <div style="font-size: 16px; color: #666;">综合评分 {final_score:.1f}/100</div>
                     <div style="font-size: 13px; color: #999; margin-top: 8px;">{rec_desc}</div>
                 </div>
@@ -1140,9 +1189,9 @@ with tab_smart:
                     text-align: center;
                 ">
                     <div style="font-size: 12px; color: #888;">#{rank}</div>
-                    <div style="font-size: 22px; font-weight: bold;">{item['name']}</div>
+                    <div style="font-size: clamp(16px, 4vw, 22px); font-weight: bold;">{item['name']}</div>
                     <div style="font-size: 14px; color: #666;">{item['code']}</div>
-                    <div style="font-size: 36px; font-weight: bold; color: {border}; margin: 8px 0;">
+                    <div style="font-size: clamp(24px, 6vw, 36px); font-weight: bold; color: {border}; margin: 8px 0;">
                         {item['final']:.0f}
                     </div>
                     <div style="font-size: 12px; color: #999;">综合评分 / 100</div>
