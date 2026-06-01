@@ -658,28 +658,21 @@ def quick_stock_score(code, name):
 # ============================================================
 
 st.title("炒股大王施大师（亏了别找我）")
-st.caption("本地运行的AI股票分析工具 — 仅供学习参考，不构成投资建议")
 
-# 侧边栏：全局设置
-with st.sidebar:
-    st.header("设置")
-    stock_code = st.text_input("股票代码", value="600519", placeholder="输入6位代码，如 600519")
-    stock_name_input = st.text_input("股票名称（可选）", value="", placeholder="自动获取")
+# 顶部控制栏 — 紧凑一行
+c1, c2, c3, c4 = st.columns([2, 1.5, 2, 2])
+with c1:
+    stock_code = st.text_input("股票代码", value="600519", placeholder="如 600519", label_visibility="collapsed")
+with c2:
+    stock_name_input = st.text_input("股票名称", value="", placeholder="自动获取", label_visibility="collapsed")
+with c3:
+    scan_universe = st.selectbox("股票池", ["沪深300", "中证500", "全部A股(5525只)"], index=0, label_visibility="collapsed")
+with c4:
+    scan_count = st.slider("扫描数", 10, 5000, 50, step=10, label_visibility="collapsed")
 
-    st.divider()
-    st.subheader("智能选股")
-    scan_universe = st.selectbox("股票池", ["沪深300", "中证500", "全部A股(5525只)"], index=0)
-    scan_count = st.slider("扫描数量", 10, 5000, 50, step=10,
-                           help="越多越慢。500只≈8分钟，5000只≈80分钟。全部A股模式下随机抽取。")
+st.caption(f"数据来源：东方财富、AKShare | 更新：{datetime.now().strftime('%H:%M:%S')} | 仅为学习参考，不构成投资建议")
 
-    st.divider()
-    st.caption("数据来源：东方财富、AKShare")
-    st.caption("新闻搜索：东方财富 + DuckDuckGo")
-    st.caption(f"更新时间：{datetime.now().strftime('%H:%M:%S')}")
-
-# ============================================================
-# 4个标签页
-# ============================================================
+# 标签页
 tab_smart, tab_market, tab_stock, tab_recommend, tab_news = st.tabs(
     ["智能选股", "市场概览", "个股分析", "智能推荐", "新闻雷达"]
 )
