@@ -764,13 +764,15 @@ with c5:
 
 st.caption(f"数据来源：东方财富、AKShare | 更新：{datetime.now().strftime('%H:%M:%S')} | 仅为学习参考，不构成投资建议")
 
-# 标签页
-tab_smart, tab_market, tab_stock, tab_recommend, tab_news = st.tabs(
-    ["智能选股", "市场概览", "个股分析", "智能推荐", "新闻雷达"]
-)
+# 标签页（用 radio 模拟，只渲染当前选中标签，避免全部标签同时请求数据）
+tab_names = ["智能选股", "市场概览", "个股分析", "智能推荐", "新闻雷达"]
+if "active_tab" not in st.session_state:
+    st.session_state.active_tab = "智能选股"
+active_tab = st.radio("导航", tab_names, horizontal=True, label_visibility="collapsed",
+                       key="tab_selector")
 
 # ===== 标签1：市场概览 =====
-with tab_market:
+if active_tab == "市场概览":
     st.subheader("主要指数行情")
 
     col1, col2 = st.columns([2, 1])
@@ -856,7 +858,7 @@ with tab_market:
         st.info("北向资金数据暂不可用")
 
 # ===== 标签2：个股分析 =====
-with tab_stock:
+if active_tab == "个股分析":
     code = st.session_state.get("stock_code", "600519") if stock_code else "600519"
     code = stock_code or "600519"
 
@@ -971,7 +973,7 @@ with tab_stock:
                         st.text(f"{k}: {v}")
 
 # ===== 标签3：智能推荐 =====
-with tab_recommend:
+if active_tab == "智能推荐":
     code = stock_code or "600519"
 
     if len(code) != 6 or not code.isdigit():
@@ -1118,7 +1120,7 @@ with tab_recommend:
                "股市有风险，投资需谨慎。ML模型在历史数据上表现不代表未来收益。")
 
 # ===== 标签4：新闻雷达 =====
-with tab_news:
+if active_tab == "新闻雷达":
     code = stock_code or "600519"
 
     if len(code) != 6 or not code.isdigit():
@@ -1203,7 +1205,7 @@ with tab_news:
                 st.info("网络搜索暂无结果（可能网络波动或DuckDuckGo不可用）")
 
 # ===== 标签5：智能选股 =====
-with tab_smart:
+if active_tab == "智能选股":
     st.subheader("AI 智能选股 — 自动扫描推荐")
 
     if "scan_results" not in st.session_state:
