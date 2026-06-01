@@ -657,6 +657,8 @@ def quick_stock_score(code, name):
 # Streamlit UI
 # ============================================================
 
+st.image("https://raw.githubusercontent.com/szy-end/stock-master/master/bg.jpg", use_container_width=True)
+
 st.title("炒股大王施大师（亏了别找我）")
 
 # 顶部控制栏 — 紧凑一行
