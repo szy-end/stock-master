@@ -35,48 +35,58 @@ st.set_page_config(
 # 响应式CSS — 手机端自适应
 st.markdown("""
 <style>
-/* 整体容器边距优化 */
+/* ===== 基础：全局紧凑 + 触摸友好 ===== */
 .main .block-container {
-    padding: 1rem 0.5rem !important;
+    padding: 0.5rem 0.4rem !important;
     max-width: 100% !important;
 }
-
-/* 小屏手机 (&lt;= 640px) */
-@media screen and (max-width: 640px) {
-    /* 标题缩小 */
-    h1 { font-size: 1.4rem !important; }
-    h2 { font-size: 1.1rem !important; }
-    h3 { font-size: 1rem !important; }
-
-    /* 卡片文字缩小 */
-    .prediction-card { padding: 10px !important; }
-    .prediction-card .big-num { font-size: 32px !important; }
-    .prediction-card .label { font-size: 12px !important; }
-
-    /* 表格字体缩小 */
-    .stDataFrame { font-size: 12px !important; }
-
-    /* 指标卡片居中 */
-    [data-testid="stMetric"] {
-        text-align: center !important;
-    }
+button, .stButton > button, [data-testid="stTextInput"] input, select {
+    min-height: 44px !important;
+    font-size: 16px !important;  /* 防iOS缩放 */
 }
-
-/* 平板 (641-1024px) */
-@media screen and (min-width: 641px) and (max-width: 1024px) {
-    h1 { font-size: 1.8rem !important; }
-}
-
-/* 防止内容溢出 */
 .stDataFrame, .stTable {
     overflow-x: auto !important;
     -webkit-overflow-scrolling: touch;
+    font-size: 13px !important;
 }
 
-/* 按钮触摸友好 */
-button, .stButton > button {
-    min-height: 44px !important;
-    min-width: 44px !important;
+/* ===== 手机 (≤768px) ===== */
+@media screen and (max-width: 768px) {
+    h1 { font-size: 1.3rem !important; line-height: 1.3 !important; }
+    h2 { font-size: 1.1rem !important; }
+    h3 { font-size: 0.95rem !important; }
+    h4, .stMarkdown p, .stCaption { font-size: 0.85rem !important; }
+
+    /* 指标卡片紧凑排列 */
+    [data-testid="stMetric"] { text-align: center !important; padding: 4px 2px !important; }
+    [data-testid="stMetric"] label { font-size: 11px !important; }
+    [data-testid="stMetric"] div { font-size: 18px !important; }
+
+    /* 标签页横向滚动 */
+    [data-testid="stTabs"] { font-size: 13px !important; }
+    [data-testid="stTabs"] button { padding: 6px 10px !important; font-size: 13px !important; }
+
+    /* 卡片/容器取消多余边距 */
+    div[data-testid="stVerticalBlock"] > div { padding: 4px 2px !important; }
+
+    /* 侧边栏全宽 */
+    [data-testid="stSidebar"] { min-width: 100% !important; }
+}
+
+/* ===== 平板 (769-1024px) ===== */
+@media screen and (min-width: 769px) and (max-width: 1024px) {
+    h1 { font-size: 1.6rem !important; }
+    .main .block-container { padding: 0.8rem 1rem !important; }
+}
+
+/* ===== 用户卡片（预测/推荐）自适应 ===== */
+@media screen and (max-width: 768px) {
+    div[style*="border-radius: 12px"] {
+        padding: 10px !important;
+    }
+    div[style*="font-size: clamp"] {
+        word-break: break-all;
+    }
 }
 </style>
 """, unsafe_allow_html=True)
@@ -748,7 +758,7 @@ with tab_market:
                 yaxis="y2",
             ))
             fig.update_layout(
-                height=350,
+                height=280,
                 margin=dict(l=0, r=0, t=0, b=0),
                 yaxis=dict(title="日净买入（亿）"),
                 yaxis2=dict(title="累计净买入（亿）", overlaying="y", side="right"),
@@ -853,7 +863,7 @@ with tab_stock:
                                  opacity=0.5), row=3, col=1)
 
             fig.update_layout(
-                height=450,
+                height=350,
                 margin=dict(l=0, r=0, t=30, b=0),
                 xaxis_rangeslider_visible=False,
                 legend=dict(x=0, y=1.1, orientation="h"),
