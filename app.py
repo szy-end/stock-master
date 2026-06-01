@@ -41,32 +41,6 @@ st.markdown("""
     max-width: 100% !important;
 }
 
-/* 背景图 */
-.stApp {
-    background: url("https://raw.githubusercontent.com/szy-end/stock-master/master/bg.jpg");
-    background-size: cover;
-    background-position: center;
-    background-attachment: fixed;
-    background-repeat: no-repeat;
-}
-
-/* 内容区半透明深色底，保证文字可读 */
-div[data-testid="stVerticalBlock"] > div {
-    background: rgba(0,0,0,0.55);
-    border-radius: 8px;
-    padding: 4px 8px;
-}
-
-/* 侧边栏透明 */
-[data-testid="stSidebar"] > div:first-child {
-    background: rgba(0,0,0,0.6) !important;
-    backdrop-filter: blur(8px);
-}
-
-[data-testid="stSidebar"] * {
-    color: #e0e0e0 !important;
-}
-
 /* 小屏手机 (&lt;= 640px) */
 @media screen and (max-width: 640px) {
     /* 标题缩小 */
