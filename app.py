@@ -658,9 +658,9 @@ with st.sidebar:
 
     st.divider()
     st.subheader("智能选股")
-    scan_universe = st.selectbox("股票池", ["沪深300", "中证500"], index=0)
-    scan_count = st.slider("扫描数量", 10, 300, 50, step=10,
-                           help="沪深300最多300只，中证500最多500只（会自动截断）。越多越慢。")
+    scan_universe = st.selectbox("股票池", ["沪深300", "中证500", "全部A股(5525只)"], index=0)
+    scan_count = st.slider("扫描数量", 10, 500, 50, step=10,
+                           help="越多越慢。500只约需8-10分钟。全部A股会随机抽取指定数量。")
 
     st.divider()
     st.caption("数据来源：东方财富、AKShare")
@@ -1121,13 +1121,24 @@ with tab_smart:
 
     if st.session_state.scan_running:
         # 获取股票列表
-        index_code = "000300" if scan_universe == "沪深300" else "000905"
         with st.spinner("获取股票列表..."):
+            codes, names = [], []
             try:
-                cons_df = ak.index_stock_cons(symbol=index_code)
-                # 过滤掉新纳入的（取最早纳入的、最稳定的成分股）
-                codes = cons_df["品种代码"].tolist()[:scan_count]
-                names = cons_df["品种名称"].tolist()[:scan_count]
+                if scan_universe == "全部A股(5525只)":
+                    all_df = ak.stock_info_a_code_name()
+                    # 过滤掉ST、*ST、退市股
+                    all_df = all_df[~all_df["name"].str.contains("ST|退市|退", na=False)]
+                    # 排除北交所（8开头）、新三板
+                    all_df = all_df[all_df["code"].str.match(r"^(00|30|60|68)\d{4}$", na=False)]
+                    # 随机抽取
+                    sample = all_df.sample(n=min(scan_count, len(all_df)), random_state=None)
+                    codes = sample["code"].tolist()
+                    names = sample["name"].tolist()
+                else:
+                    index_code = "000300" if scan_universe == "沪深300" else "000905"
+                    cons_df = ak.index_stock_cons(symbol=index_code)
+                    codes = cons_df["品种代码"].tolist()[:scan_count]
+                    names = cons_df["品种名称"].tolist()[:scan_count]
             except Exception as e:
                 st.error(f"获取股票列表失败：{e}")
                 st.session_state.scan_running = False
