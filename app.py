@@ -41,6 +41,16 @@ st.markdown("""
     max-width: 100% !important;
 }
 
+/* 背景图 */
+.stApp {
+    background: linear-gradient(rgba(255,255,255,0.85), rgba(255,255,255,0.85)),
+                url("https://raw.githubusercontent.com/szy-end/stock-master/master/bg.jpg");
+    background-size: cover;
+    background-position: center;
+    background-attachment: fixed;
+    background-repeat: no-repeat;
+}
+
 /* 小屏手机 (&lt;= 640px) */
 @media screen and (max-width: 640px) {
     /* 标题缩小 */
