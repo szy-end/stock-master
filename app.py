@@ -1059,11 +1059,11 @@ with tab_news:
                     else:
                         emoji = "⚪"
 
-                    with st.expander(f"{emoji} {title}", expanded=False):
-                        st.caption(f"来源：{source} | 时间：{pub_time}")
-                        content = row.get("内容", "")
-                        if content:
-                            st.text(str(content)[:300])
+                    st.markdown(f"{emoji} **{title}**")
+                    st.caption(f"来源：{source} | 时间：{pub_time}")
+                    content = row.get("内容", "")
+                    if content:
+                        st.caption(str(content)[:200])
             else:
                 st.info("暂无相关新闻")
 
@@ -1094,11 +1094,12 @@ with tab_news:
                     else:
                         emoji = "⚪"
 
-                    with st.expander(f"{emoji} {title}", expanded=False):
-                        st.caption(f"来源：{source} | 时间：{pub_date}")
-                        st.text(body[:300] if body else "")
-                        if url:
-                            st.caption(f"[阅读原文]({url})")
+                    st.markdown(f"{emoji} **{title}**")
+                    st.caption(f"来源：{source} | 时间：{pub_date}")
+                    if body:
+                        st.caption(body[:200])
+                    if url:
+                        st.caption(f"[阅读原文]({url})")
             else:
                 st.info("网络搜索暂无结果（可能网络波动或DuckDuckGo不可用）")
 
