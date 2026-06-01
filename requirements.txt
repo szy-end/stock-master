@@ -6,3 +6,4 @@ numpy>=1.24
 streamlit>=1.28
 plotly>=5.15
 duckduckgo_search>=5.0
+lightgbm>=4.0

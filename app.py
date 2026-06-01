@@ -336,8 +336,13 @@ def compute_features(df):
     return pd.DataFrame(features)
 
 
-def train_ml_model(df):
-    """训练ML模型并返回预测"""
+def train_ml_model(df, model_type="双模型投票"):
+    """训练ML模型并返回预测
+
+    Args:
+        df: 股票日线数据
+        model_type: "双模型投票" / "随机森林" / "LightGBM"
+    """
     from sklearn.ensemble import RandomForestClassifier, GradientBoostingClassifier
 
     feat_df = compute_features(df)
@@ -356,7 +361,70 @@ def train_ml_model(df):
     X_train, X_test = X[:split], X[split:]
     y_train, y_test = y[:split], y[split:]
 
-    # 训练两个模型
+    rf = None
+    gb = None
+
+    if model_type == "LightGBM":
+        # LightGBM 模型
+        try:
+            from lightgbm import LGBMClassifier
+            model = LGBMClassifier(
+                n_estimators=200, max_depth=7, num_leaves=31,
+                min_child_samples=10, learning_rate=0.05,
+                random_state=42, verbose=-1,
+            )
+            model.fit(X_train, y_train)
+            acc = model.score(X_test, y_test)
+            prob = model.predict_proba(X[-1:])[0, 1]
+
+            importances = model.feature_importances_
+            feat_imp = sorted(zip(feature_cols, importances), key=lambda x: x[1], reverse=True)[:5]
+            baseline = max(y_test.mean(), 1 - y_test.mean())
+
+            results = {
+                "rf_acc": acc,
+                "gb_acc": acc,
+                "avg_acc": acc,
+                "baseline": baseline,
+                "rf_prob": prob,
+                "gb_prob": prob,
+                "avg_prob": prob,
+                "prediction": "涨" if prob > 0.5 else "跌",
+                "feat_imp": feat_imp,
+                "test_size": len(y_test),
+            }
+            return results, model, None, feat_df
+        except ImportError:
+            st.warning("LightGBM 未安装，回退到双模型投票")
+            model_type = "双模型投票"
+
+    if model_type == "随机森林":
+        # 仅随机森林
+        rf = RandomForestClassifier(n_estimators=150, max_depth=8,
+                                     min_samples_leaf=10, random_state=42)
+        rf.fit(X_train, y_train)
+        acc = rf.score(X_test, y_test)
+        prob = rf.predict_proba(X[-1:])[0, 1]
+
+        importances = rf.feature_importances_
+        feat_imp = sorted(zip(feature_cols, importances), key=lambda x: x[1], reverse=True)[:5]
+        baseline = max(y_test.mean(), 1 - y_test.mean())
+
+        results = {
+            "rf_acc": acc,
+            "gb_acc": acc,
+            "avg_acc": acc,
+            "baseline": baseline,
+            "rf_prob": prob,
+            "gb_prob": prob,
+            "avg_prob": prob,
+            "prediction": "涨" if prob > 0.5 else "跌",
+            "feat_imp": feat_imp,
+            "test_size": len(y_test),
+        }
+        return results, rf, None, feat_df
+
+    # 双模型投票（默认）
     rf = RandomForestClassifier(n_estimators=150, max_depth=8,
                                  min_samples_leaf=10, random_state=42)
     rf.fit(X_train, y_train)
@@ -535,7 +603,7 @@ def fetch_stock_data_cached(code):
     return None
 
 
-def quick_stock_score(code, name):
+def quick_stock_score(code, name, model_type="双模型投票"):
     """快速评估单只股票的上涨潜力（0-100分）"""
     df = fetch_stock_data_cached(code)
     if df is None:
@@ -604,8 +672,6 @@ def quick_stock_score(code, name):
         mom_score = max(0, min(100, mom_score))
 
         # ---- 3. ML预测评分 (35%) ----
-        from sklearn.ensemble import RandomForestClassifier
-
         # 构建特征
         feats = pd.DataFrame({
             "ret_1": pd.Series(close).pct_change(1),
@@ -630,11 +696,32 @@ def quick_stock_score(code, name):
             split = int(len(X) * 0.8)
             X_train, X_test = X[:split], X[split:]
             y_train, y_test = y[:split], y[split:]
-            rf = RandomForestClassifier(n_estimators=80, max_depth=6,
-                                         min_samples_leaf=5, random_state=42)
-            rf.fit(X_train, y_train)
-            prob = rf.predict_proba(X_test[-1:])[0, 1]
-            ml_score = prob * 100
+
+            if model_type == "LightGBM":
+                try:
+                    from lightgbm import LGBMClassifier
+                    model = LGBMClassifier(
+                        n_estimators=100, max_depth=6, num_leaves=15,
+                        min_child_samples=5, learning_rate=0.08,
+                        random_state=42, verbose=-1,
+                    )
+                    model.fit(X_train, y_train)
+                    prob = model.predict_proba(X_test[-1:])[0, 1]
+                    ml_score = prob * 100
+                except ImportError:
+                    from sklearn.ensemble import RandomForestClassifier
+                    rf = RandomForestClassifier(n_estimators=80, max_depth=6,
+                                                 min_samples_leaf=5, random_state=42)
+                    rf.fit(X_train, y_train)
+                    prob = rf.predict_proba(X_test[-1:])[0, 1]
+                    ml_score = prob * 100
+            else:
+                from sklearn.ensemble import RandomForestClassifier
+                rf = RandomForestClassifier(n_estimators=80, max_depth=6,
+                                             min_samples_leaf=5, random_state=42)
+                rf.fit(X_train, y_train)
+                prob = rf.predict_proba(X_test[-1:])[0, 1]
+                ml_score = prob * 100
 
         # ---- 综合 ----
         final = tech_score * 0.35 + mom_score * 0.30 + ml_score * 0.35
@@ -663,7 +750,7 @@ st.image("https://raw.githubusercontent.com/szy-end/stock-master/master/bg.jpg",
 st.title("炒股大王施大师（亏了别找我）")
 
 # 顶部控制栏 — 紧凑一行
-c1, c2, c3, c4 = st.columns([2, 1.5, 2, 2])
+c1, c2, c3, c4, c5 = st.columns([1.8, 1.5, 2, 1.5, 1.5])
 with c1:
     stock_code = st.text_input("股票代码", value="600519", placeholder="如 600519", label_visibility="collapsed")
 with c2:
@@ -672,6 +759,8 @@ with c3:
     scan_universe = st.selectbox("股票池", ["沪深300", "中证500", "全部A股(5525只)"], index=0, label_visibility="collapsed")
 with c4:
     scan_count = st.slider("扫描数", 10, 5000, 50, step=10, label_visibility="collapsed")
+with c5:
+    model_choice = st.selectbox("算法", ["双模型投票", "随机森林", "LightGBM"], index=0, label_visibility="collapsed")
 
 st.caption(f"数据来源：东方财富、AKShare | 更新：{datetime.now().strftime('%H:%M:%S')} | 仅为学习参考，不构成投资建议")
 
@@ -902,9 +991,9 @@ with tab_recommend:
             col1, col2 = st.columns([1, 1])
 
             with col1:
-                st.subheader("ML 模型预测")
+                st.subheader(f"ML 模型预测 ({model_choice})")
                 with st.spinner("训练模型中..."):
-                    ml_results, rf_model, gb_model, feat_df = train_ml_model(df)
+                    ml_results, rf_model, gb_model, feat_df = train_ml_model(df, model_choice)
 
                 if ml_results is None:
                     st.error("模型训练失败")
@@ -932,9 +1021,16 @@ with tab_recommend:
                     """, unsafe_allow_html=True)
 
                     # 模型准确率
-                    st.caption(f"随机森林测试准确率: {ml_results['rf_acc']:.2%} | "
-                              f"GBDT: {ml_results['gb_acc']:.2%} | "
-                              f"基准: {ml_results['baseline']:.2%}")
+                    if model_choice == "双模型投票":
+                        st.caption(f"随机森林测试准确率: {ml_results['rf_acc']:.2%} | "
+                                  f"GBDT: {ml_results['gb_acc']:.2%} | "
+                                  f"基准: {ml_results['baseline']:.2%}")
+                    elif model_choice == "LightGBM":
+                        st.caption(f"LightGBM 测试准确率: {ml_results['avg_acc']:.2%} | "
+                                  f"基准: {ml_results['baseline']:.2%}")
+                    else:
+                        st.caption(f"随机森林测试准确率: {ml_results['avg_acc']:.2%} | "
+                                  f"基准: {ml_results['baseline']:.2%}")
 
                     # 特征重要性
                     st.caption("**Top 5 重要特征**")
@@ -1120,7 +1216,7 @@ with tab_smart:
         do_scan = st.button("开始扫描", type="primary", use_container_width=True,
                             disabled=st.session_state.scan_running)
     with col2:
-        st.caption(f"将扫描 {scan_universe} 中的前 {scan_count} 只股票，请耐心等待")
+        st.caption(f"将扫描 {scan_universe} 中的前 {scan_count} 只股票（算法：{model_choice}），请耐心等待")
 
     if do_scan:
         st.session_state.scan_running = True
@@ -1162,7 +1258,7 @@ with tab_smart:
             total = len(codes)
 
             with ThreadPoolExecutor(max_workers=workers) as executor:
-                futures = {executor.submit(quick_stock_score, c, n): (c, n) for c, n in zip(codes, names)}
+                futures = {executor.submit(quick_stock_score, c, n, model_choice): (c, n) for c, n in zip(codes, names)}
 
                 for future in as_completed(futures):
                     completed += 1
@@ -1307,4 +1403,4 @@ with tab_smart:
 # 底部
 # ============================================================
 st.divider()
-st.caption("炒股大王施大师（亏了别找我） v1.0 | 本工具仅供学习参考，不构成投资建议 | 数据来源：AKShare、东方财富、DuckDuckGo")
+st.caption("炒股大王施大师（亏了别找我） v1.1 | 本工具仅供学习参考，不构成投资建议 | 数据来源：AKShare、东方财富、DuckDuckGo")
