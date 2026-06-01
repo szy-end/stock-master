@@ -643,7 +643,7 @@ with tab_market:
                         return f'color: #27ae60'
                 return ''
 
-            styled = index_df.style.applymap(
+            styled = index_df.style.map(
                 color_val, subset=["涨跌幅", "涨跌额"]
             ).format({
                 "涨跌幅": "{:.2f}%",
@@ -1198,9 +1198,9 @@ with tab_smart:
                 return "background-color: #e74c3c30; color: #e74c3c"
             return ""
 
-        styled_table = table_df.style.applymap(
+        styled_table = table_df.style.map(
             highlight_score, subset=["综合"]
-        ).applymap(
+        ).map(
             highlight_tag, subset=["建议"]
         )
 
