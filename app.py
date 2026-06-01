@@ -659,8 +659,8 @@ with st.sidebar:
     st.divider()
     st.subheader("智能选股")
     scan_universe = st.selectbox("股票池", ["沪深300", "中证500"], index=0)
-    scan_count = st.slider("扫描数量", 10, 100, 50, step=10,
-                           help="越多越慢，建议先试20-30只")
+    scan_count = st.slider("扫描数量", 10, 300, 50, step=10,
+                           help="沪深300最多300只，中证500最多500只（会自动截断）。越多越慢。")
 
     st.divider()
     st.caption("数据来源：东方财富、AKShare")
