@@ -21,6 +21,7 @@ from plotly.subplots import make_subplots
 import akshare as ak
 from datetime import datetime, timedelta
 import time
+from concurrent.futures import ThreadPoolExecutor, as_completed
 
 # ============================================================
 # 页面配置
@@ -1151,27 +1152,38 @@ with tab_smart:
                 codes, names = [], []
 
         if codes:
+            workers = min(20, len(codes))  # 最多20线程并行
             if len(codes) > 300:
-                st.warning(f"即将扫描 {len(codes)} 只股票，预计需要 {len(codes)//60}-{len(codes)//30} 分钟。请耐心等待，不要关闭页面。")
+                st.warning(f"即将并行扫描 {len(codes)} 只股票（{workers}线程），预计 {len(codes)//150}-{len(codes)//80} 分钟。请勿关闭页面。")
             progress_bar = st.progress(0, text="准备扫描...")
             status_area = st.empty()
             results = []
+            completed = 0
+            total = len(codes)
 
-            for i, (code, name) in enumerate(zip(codes, names)):
-                pct = (i + 1) / len(codes)
-                progress_bar.progress(pct, text=f"正在分析 {name}({code}) ... {i+1}/{len(codes)}")
+            with ThreadPoolExecutor(max_workers=workers) as executor:
+                futures = {executor.submit(quick_stock_score, c, n): (c, n) for c, n in zip(codes, names)}
 
-                score = quick_stock_score(code, name)
-                if score:
-                    results.append(score)
+                for future in as_completed(futures):
+                    completed += 1
+                    pct = completed / total
+                    code, name = futures[future]
+                    try:
+                        score = future.result()
+                        if score:
+                            results.append(score)
+                    except Exception:
+                        pass
 
-                # 每10只显示一次中间结果
-                if (i + 1) % 10 == 0 and results:
-                    top_so_far = sorted(results, key=lambda x: x["final"], reverse=True)[:5]
-                    status_text = "当前 Top 5:\n"
-                    for r, item in enumerate(top_so_far, 1):
-                        status_text += f"  {r}. {item['name']}({item['code']}) 综合{item['final']:.0f}分\n"
-                    status_area.text(status_text)
+                    # 每10只更新一次进度
+                    if completed % 10 == 0 or completed == total:
+                        progress_bar.progress(pct, text=f"已分析 {completed}/{total} ... 当前Top5预览")
+                        if results:
+                            top_so_far = sorted(results, key=lambda x: x["final"], reverse=True)[:5]
+                            status_text = "当前 Top 5:\n"
+                            for r, item in enumerate(top_so_far, 1):
+                                status_text += f"  {r}. {item['name']}({item['code']}) 综合{item['final']:.0f}分\n"
+                            status_area.text(status_text)
 
             progress_bar.progress(1.0, text="扫描完成！")
             st.session_state.scan_results = sorted(results, key=lambda x: x["final"], reverse=True)
